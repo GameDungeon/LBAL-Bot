@@ -254,6 +254,6 @@ def bot():
                 first_spin = False
 
 
-startup()
-new_game()
+#startup()
+#new_game()
 bot()
