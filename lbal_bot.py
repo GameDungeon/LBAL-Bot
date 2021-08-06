@@ -143,13 +143,19 @@ def parse_save(last_save, last_info):
 
         info["symbols"] = [(x[0], copy(IDS["symbol"][x[1]])) for x in list(filter(lambda a:  a[1] != "empty", zip(data, symbols)))]
 
-        if data[0] != None:
+        try:
             for x in info["symbols"]:
                 x[1].bonus_coins = x[0]["permanent_bonus"]
                 x[1].bonus_mult = x[0]["permanent_multiplier"]
                 x[1].times_shown = x[0]["times_displayed"]
-
+        except Exception as e:
+            pass
+        
+        
         info["symbols"] = [x[1] for x in info["symbols"]]
+
+        if not info["symbols"]:
+            accept()
         
         info["choices"] = lines[9]["saved_card_types"]
         info["email"]   = lines[9]["emails"]
