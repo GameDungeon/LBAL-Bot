@@ -113,7 +113,7 @@ def predict_thread(symbols, layers, layer=1):
         for x in removal:
             symbols.remove(x)
             add.extend(x.on_destroy_add)
-            coin += (x.destruction_coin_bonus + x.bonus_coins) * (m.multiplier + m.bonus_mult)
+            coin += (x.destruction_coin_bonus + x.bonus_coins) * (x.multiplier + x.bonus_mult)
 
     symbols.extend([IDS["symbol"][y] for y in add])
    
