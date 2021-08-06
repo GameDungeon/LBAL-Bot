@@ -18,6 +18,16 @@ def add_symbol(symbol):
 def destroy_self():
     return (0, [], True)
 
+def destroy():
+    return [destruct, destruct]
+
+def eat_coin(n):
+    return [plus(n), destruct]
+
+def eat_mult(n):
+    return [mult(n), destruct]
+
+
 class Symbol:
     def __init__(
         self,
@@ -41,6 +51,10 @@ class Symbol:
         self.chance = chance
         self.other = other
         self.dice = dice
+
+        self.bonus_coins = 0
+        self.bonus_mult  = 1
+        self.times_shown = 0
        
 
 
@@ -53,14 +67,14 @@ IDS = {
         "empty": Symbol("empty", 0),
         # common
         "anchor": Symbol("anchor", 1),
-        "banana": Symbol("banana", 1, {"thief":  [destruct, destruct]}, on_destroy_add=["banana_peel"]),
-        "banana_peel": Symbol("banana_peel", 1,  {"lockbox":  [destruct, destruct]}),
+        "banana": Symbol("banana", 1, {"thief":  destroy()}, on_destroy_add=["banana_peel"]),
+        "banana_peel": Symbol("banana_peel", 1,  {"lockbox":  destroy()}),
         "bee": Symbol("bee", 1, {"flower": mult(2),"beehive": mult(2),"honey": mult(2)}),
         "beer": Symbol("beer", 1),
         "bounty_hunter": Symbol("bounty_hunter", 1, {"thief": [plus(20), destruct]}),
         "bubble": Symbol("bubble", 2),
         "candy": Symbol("candy", 1),
-        "cat": Symbol("cat", 1,  {"milk": [plus(9), destruct]}),
+        "cat": Symbol("cat", 1,  {"milk": eat_coin(9)}),
         "cheese": Symbol("cheese", 1),
         "cherry": Symbol("cherry", 1),
         "coal": Symbol("coal", 0),
@@ -70,32 +84,32 @@ IDS = {
         "cultist": Symbol("cultist", 0, other=1),
         "d3": Symbol("d3", 0, dice=3),
         "dog": Symbol("dog", 1),
-        "dwarf": Symbol("dwarf", 1, {"beer": [mult(10), destruct], "wine": [mult(10), destruct]}),
+        "dwarf": Symbol("dwarf", 1, {"beer": eat_mult(10), "wine": eat_mult(10)}),
         "egg": Symbol("egg", 1, chance=[(10, destroy_self())], on_destroy_add=["chick"]),
         "flower": Symbol("flower", 1),
         "goldfish": Symbol("goldfish", 1),
         "goose": Symbol("goose", 1),
-        "key": Symbol("key", 1, {"lockbox":  [destruct, destruct], "safe":  [destruct, destruct],"treasure_chest":  [destruct, destruct],"mega_chest":  [destruct, destruct], }),
+        "key": Symbol("key", 1, {"lockbox": destroy(), "safe": destroy(),"treasure_chest": destroy(), "mega_chest": destroy()}),
         "lockbox": Symbol("lockbox", 1, destruction_coin_bonus=15),
         "magpie": Symbol("magpie", -1),
         "milk": Symbol("milk", 1),
-        "miner": Symbol("miner", 1, {"ore": [plus(10), destruct], "big_ore": [plus(10), destruct]}),
-        "monkey": Symbol("monkey", 1, {"coconut":  [mult(5), destruct], "coconut_half":  [mult(5), destruct]}),
-        "mouse": Symbol("mouse", 1, {"cheese":[plus(15), destruct]}),
+        "miner": Symbol("miner", 1, {"ore": eat_coin(10), "big_ore": eat_coin(10)}),
+        "monkey": Symbol("monkey", 1, {"coconut":  eat_mult(5), "coconut_half":  eat_mult(5)}),
+        "mouse": Symbol("mouse", 1, {"cheese":eat_coin(15)}),
         "ore": Symbol("ore", 1),
         "owl": Symbol("owl", 1),
-        "oyster": Symbol("oyster", 1, chance=[(20, (0,["pearl"], False))], on_destroy_add=["pearl"]),
+        "oyster": Symbol("oyster", -99, chance=[(20, add_symbol("pearl"))], on_destroy_add=["pearl"]),
         "pearl": Symbol("pearl", 1),
         "present": Symbol("present", 0, destruction_coin_bonus=10),
         "seed": Symbol("seed", 1),
         "shiny_pebble": Symbol("shiny_pebble", 1),
         "snail": Symbol("snail", 0),
-        "toddler": Symbol("toddler", 1, {"present": [plus(6), destruct],"candy": [plus(6), destruct],"pinata": [plus(6), destruct],"bubble": [plus(6), destruct]}),
+        "toddler": Symbol("toddler", 1, {"present": eat_coin(6),"candy": eat_coin(6), "pinata": eat_coin(6), "bubble": eat_coin(6)}),
         "turtle": Symbol("turtle", 0),
         "urn": Symbol("urn", 1, on_destroy_add=["spirit"]),
         # uncommon
-        "bar_of_soap": Symbol("bar_of_soap", 1, chance=[(100, (0, ['bubble'], False))]),
-        "bear": Symbol("bear", 2),
+        "bar_of_soap": Symbol("bar_of_soap", 1, chance=[(100, add_symbol("bubble"))]),
+        "bear": Symbol("bear", 2, {"honey": eat_coin(35)}),
         "big_ore": Symbol("big_ore", 2),
         "big_urn": Symbol("big_urn", 2, on_destroy_add=["spirit", "spirit"]),
         "billionaire": Symbol("billionaire", 0, destruction_coin_bonus=35),
@@ -106,15 +120,15 @@ IDS = {
         "clubs": Symbol("clubs", 1),
         "coconut": Symbol("coconut", 1, on_destroy_add=["coconut_half", "coconut_half"]),
         "coconut_half": Symbol("coconut_half", 2),
-        "d5": Symbol("d5", 0),
+        "d5": Symbol("d5", 0, dice=5),
         "diamonds": Symbol("diamonds", 1),
         "essence_capsule": Symbol("essence_capsule", 0, self_destruct=True),
         "golem": Symbol("golem", 0, on_destroy_add=["ore","ore","ore","ore","ore"]),
         "hearts": Symbol("hearts", 1),
-        "hex_of_destruction": Symbol("hex_of_destruction", 3),
-        "hex_of_draining": Symbol("hex_of_draining", 3),
-        "hex_of_emptiness": Symbol("hex_of_emptiness", 3),
-        "hex_of_hoarding": Symbol("hex_of_hoarding", -99999999999), #wrong
+        "hex_of_destruction": Symbol("hex_of_destruction", -99),
+        "hex_of_draining": Symbol("hex_of_draining", -99),
+        "hex_of_emptiness": Symbol("hex_of_emptiness", -99),
+        "hex_of_hoarding": Symbol("hex_of_hoarding", -99), #wrong
         "hex_of_midas": Symbol("hex_of_midas", 3, chance=[(30, add_symbol("coin"))]),
         "hex_of_tedium": Symbol("hex_of_tedium", 3),
         "hex_of_thievery": Symbol("hex_of_thievery", 3, chance=[(30, (-6, None, False))]),
@@ -166,10 +180,10 @@ IDS = {
         "golden_egg": Symbol("golden_egg", 3),
         "honey": Symbol("honey", 3),
         "joker": Symbol("joker", 3),
-        "king_midas": Symbol("king_midas", 3, chance=[(100, add_symbol("coin"))]),
-        "magic_key": Symbol("magic_key", 2),
+        "king_midas": Symbol("king_midas", 3, {"coin":mult(3)}, chance=[(100, add_symbol("coin"))]),
+        "magic_key": Symbol("magic_key", 2, {"lockbox": [destruct, (0, 3, True)], "safe": [destruct, (0, 3, True)],"treasure_chest": [destruct, (0, 3, True)], "mega_chest":  [destruct, (0, 3, True)]}),
         "martini": Symbol("martini", 3),
-        "mine": Symbol("mine", 1),
+        "mine": Symbol("mine", 1, chance=[(100, add_symbol("ore"))]),
         "moon": Symbol("moon", 3),
         "mrs_fruit": Symbol("mrs_fruit", 2),
         "omelette": Symbol("omelette", 3),
@@ -190,7 +204,7 @@ IDS = {
         "highlander": Symbol("highlander", 6),
         "mega_chest": Symbol("mega_chest", 3, destruction_coin_bonus=100,),
         "midas_bomb": Symbol("midas_bomb", 0, {"any": mult(7)}, self_destruct=True),
-        "pirate": Symbol("pirate", 2, {"coin": destruct, "lockbox":  destruct, "safe":  destruct,"treasure_chest":  destruct, "mega_chest":  destruct}),
+        "pirate": Symbol("pirate", 2, {"coin": destruct, "lockbox": destruct, "safe": destruct,"treasure_chest": destruct, "mega_chest":  destruct}),
         "watermelon": Symbol("watermelon", 4),
         "wildcard": Symbol("wildcard", 0),
     },

@@ -3,9 +3,8 @@ import time
 from pydirectinput import click, press
 import json
 import numpy as np
-import dictdiffer
 import random
-from copy import copy
+from copy import copy, deepcopy
 
 from tiles import IDS
 
@@ -56,17 +55,18 @@ def predict_board(symbols, nodes, layers):
 def predict_thread(symbols, layers, layer=1):
     coin = 0
 
-    symbols = copy(symbols)
+    symbols = deepcopy(symbols)
     tiles = copy(symbols)
+
     tiles.extend([IDS["symbol"]["empty"]] * max(0, 20 - len(tiles)))
     tiles = np.reshape(random.sample(tiles, 20), (4, 5))
-
-    tiles = np.vectorize(lambda m : copy(m))(tiles)
 
     removal = set()
     add = []
     for y, row in enumerate(tiles):
         for x, tile in enumerate(row):
+            if tile.bonus_coins != 0:
+                print(tile.bonus_coins)
             neighbours = [tiles[yn][xn] 
                             for xoff in range(-1, 2)
                             for yoff in range(-1, 2)
@@ -107,14 +107,13 @@ def predict_thread(symbols, layers, layer=1):
                 removal.add(tile)
 
 
-    coin = np.sum(np.vectorize(lambda m : m.coin_value * m.multiplier)(tiles))
+    coin = np.sum(np.vectorize(lambda m : (m.coin_value + m.bonus_coins) * (m.multiplier + m.bonus_mult))(tiles))
 
     if removal:
-        symbols = list(symbols)
         for x in removal:
-            symbols.remove(IDS["symbol"][x.name])
+            symbols.remove(x)
             add.extend(x.on_destroy_add)
-            coin += x.destruction_coin_bonus * x.multiplier
+            coin += (x.destruction_coin_bonus + x.bonus_coins) * (m.multiplier + m.bonus_mult)
 
     symbols.extend([IDS["symbol"][y] for y in add])
    
@@ -134,22 +133,23 @@ def parse_save(last_save, last_info):
     info = dict()
 
     if last_save != {}:
-        for i, line in enumerate(lines):
-            changes = list(dictdiffer.diff(last_save[i], line))
-            if changes:
-                pass
-                # pprint(changes)
         # TODO: Inventory Sorts Items value/rarity/alphabet
 
         symbols = []
-        out = []
+        data = []
         for i in range(3, 8):
-            symbols.append(lines[i]["icon_types"])
+            symbols.extend(lines[i]["icon_types"])
+            data.extend(lines[i]["saved_icon_data"])
 
-        for l in symbols:
-            out += l
+        info["symbols"] = [(x[0], copy(IDS["symbol"][x[1]])) for x in list(filter(lambda a:  a[1] != "empty", zip(data, symbols)))]
 
-        info["symbols"] = [IDS["symbol"][x] for x in list(filter(lambda a: a != "empty", out))]
+        if data[0] != None:
+            for x in info["symbols"]:
+                x[1].bonus_coins = x[0]["permanent_bonus"]
+                x[1].bonus_mult = x[0]["permanent_multiplier"]
+                x[1].times_shown = x[0]["times_displayed"]
+
+        info["symbols"] = [x[1] for x in info["symbols"]]
         
         info["choices"] = lines[9]["saved_card_types"]
         info["email"]   = lines[9]["emails"]
@@ -163,8 +163,6 @@ def parse_save(last_save, last_info):
         info["rentCost"]  = rent[0]
         info["turnsLeft"] = rent[1]
 
-        # if info != last_info:
-        #    pprint(info)
     else:
         info = last_info
 
@@ -201,8 +199,10 @@ def bot():
 
             elif email["type"] == "add_tile":
                 tile_num = 1
-                adverage = predict_board(info["symbols"], nodes, info["turnsLeft"])
-                choices = [predict_board(info["symbols"] + [IDS["symbol"][symbol]], nodes, info["turnsLeft"]) for symbol in info["choices"]]
+                layers = info["turnsLeft"] if info["coins"] < info["rentCost"] else max(10, info["turnsLeft"])
+                adverage = predict_board(info["symbols"], nodes, layers)
+                choices = [predict_board(info["symbols"] + [copy(IDS["symbol"][symbol])], nodes, layers) for symbol in info["choices"]]
+                print(list(zip(info["choices"], [round(x, 2) for x in choices])))
                 max_value = max(choices)
 
                 if max_value >= adverage:
